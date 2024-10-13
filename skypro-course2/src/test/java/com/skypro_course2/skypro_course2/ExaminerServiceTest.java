@@ -1,13 +1,14 @@
 package com.skypro_course2.skypro_course2;
 
 import com.skypro_course2.skypro_course2.domain.Question;
-import com.skypro_course2.skypro_course2.exception.OutOfQuestionSetBoundsException;
+import com.skypro_course2.skypro_course2.exception.OutOfMaxNumberOfQuestionsException;
 import com.skypro_course2.skypro_course2.service.ExaminerServiceImpl;
 import com.skypro_course2.skypro_course2.service.QuestionService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.internal.verification.AtLeast;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
@@ -26,7 +27,9 @@ public class ExaminerServiceTest {
     private Collection<Question> questionsList;
 
     @Mock
-    private QuestionService questionServiceMock;
+    private QuestionService javaQuestionServiceMock;
+    @Mock
+    private QuestionService mathQuestionServiceMock;
 
     @InjectMocks
     private ExaminerServiceImpl examinerService;
@@ -49,33 +52,35 @@ public class ExaminerServiceTest {
     @Test
     @DisplayName("Положительный тест на получения списка вопросов и ответов")
     public void shouldReturnListOfQuestion() {
-        when(questionServiceMock.getAll()).thenReturn(questionsList);
-        when(questionServiceMock.getRandomQuestion()).thenReturn(questionsList.stream().toList().get(new Random().nextInt(questionsList.size())));
+        Random random = new Random();
+
+        when(javaQuestionServiceMock.getAll()).thenReturn(questionsList);
+        when(javaQuestionServiceMock.getRandomQuestion()).thenReturn(questionsList.stream().toList().get(random.nextInt(questionsList.size())));
 
         assertThat(examinerService.getQuestions(1)).containsAnyElementsOf(questionsList);
 
-        verify(questionServiceMock, times(1)).getAll();
-        verify(questionServiceMock, times(1)).getRandomQuestion();
+        verify(javaQuestionServiceMock, times(1)).getAll();
+        verify(javaQuestionServiceMock, atMost(1)).getRandomQuestion();
     }
 
     @Test
     @DisplayName("Отрицальтельный тест на запрос вопросов больше чем в списке вопросов")
     public void shouldThrowExceptionWhenAmountAboveCorrect() {
-        when(questionServiceMock.getAll()).thenReturn(new ArrayList<>());
+        when(javaQuestionServiceMock.getAll()).thenReturn(new ArrayList<>());
 
-        assertThrows(OutOfQuestionSetBoundsException.class, () -> examinerService.getQuestions(1));
+        assertThrows(OutOfMaxNumberOfQuestionsException.class, () -> examinerService.getQuestions(1));
 
-        verify(questionServiceMock, times(1)).getAll();
+        verify(javaQuestionServiceMock, times(1)).getAll();
+        verify(javaQuestionServiceMock, never()).getRandomQuestion();
+        verify(mathQuestionServiceMock, never()).getRandomQuestion();
     }
 
     @Test
     @DisplayName("Отрицательный тест на запрос вопросов <= 0")
     public void shouldThrowExceptionWhenAmountBelowCorrect() {
-        when(questionServiceMock.getAll()).thenReturn(questionsList);
+        assertThrows(OutOfMaxNumberOfQuestionsException.class, () -> examinerService.getQuestions(0));
 
-        assertThrows(OutOfQuestionSetBoundsException.class, () -> examinerService.getQuestions(0));
-
-        verify(questionServiceMock, times(1)).getAll();
-        verify(questionServiceMock, never()).getRandomQuestion();
+        verify(javaQuestionServiceMock, never()).getRandomQuestion();
+        verify(mathQuestionServiceMock, never()).getRandomQuestion();
     }
 }

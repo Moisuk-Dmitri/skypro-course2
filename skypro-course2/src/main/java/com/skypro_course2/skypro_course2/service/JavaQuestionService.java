@@ -1,76 +1,52 @@
 package com.skypro_course2.skypro_course2.service;
 
 import com.skypro_course2.skypro_course2.domain.Question;
-import com.skypro_course2.skypro_course2.exception.AddingQuestionException;
-import com.skypro_course2.skypro_course2.exception.EmptyQuestionSetException;
-import com.skypro_course2.skypro_course2.exception.RemovingQuestionException;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
+@Component("JavaQuestionService")
 public class JavaQuestionService implements QuestionService {
 
-    private Set<Question> questionSet;
+    private final JavaQuestionRepository javaQuestionRepository;
 
-    public JavaQuestionService() {
-        questionSet = new HashSet<>();
+    public JavaQuestionService(JavaQuestionRepository javaQuestionRepository) {
+        this.javaQuestionRepository = javaQuestionRepository;
     }
 
     @Override
     public Question add(String question, String answer) {
-        if (questionSet.contains(new Question(question, answer)))
-        {
-            throw new AddingQuestionException(new Exception("Question already assigned"));
-        }
-
-            questionSet.add(new Question(question, answer));
-
-        return new Question(question, answer);
+        return javaQuestionRepository.add(question, answer);
     }
 
     @Override
     public Question add(Question question) {
-        if (questionSet.contains(question))
-        {
-            throw new AddingQuestionException(new Exception("Question already assigned"));
-        }
+        return javaQuestionRepository.add(question);
+    }
 
-        questionSet.add(question);
-
-        return question;
+    @Override
+    public Question remove(String question, String answer) {
+        return javaQuestionRepository.remove(question, answer);
     }
 
     @Override
     public Question remove(Question question) {
-        if (!questionSet.contains(question))
-        {
-            throw new RemovingQuestionException(new Exception("Question cant be found"));
-        }
-
-        questionSet.remove(question);
-
-        return question;
+        return javaQuestionRepository.remove(question);
     }
 
     @Override
     public Collection<Question> getAll() {
-        if (questionSet.isEmpty()) {
-            throw new EmptyQuestionSetException(new Exception("Empty question set"));
-        }
-
-        return questionSet.stream()
-                .toList();
+        return javaQuestionRepository.getAll();
     }
 
     @Override
     public Question getRandomQuestion() {
-        if (questionSet.isEmpty()) {
-            throw new EmptyQuestionSetException(new Exception("Empty question set"));
-        }
+        Random random = new Random();
 
-        return questionSet.stream()
+        return javaQuestionRepository.getAll().stream()
                 .toList()
-                .get(new Random().nextInt(questionSet.size()));
+                .get(random.nextInt(javaQuestionRepository.getAll().size()));
     }
 }

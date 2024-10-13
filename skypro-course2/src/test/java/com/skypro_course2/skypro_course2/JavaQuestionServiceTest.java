@@ -1,102 +1,162 @@
 package com.skypro_course2.skypro_course2;
 
 import com.skypro_course2.skypro_course2.domain.Question;
-import com.skypro_course2.skypro_course2.exception.AddingQuestionException;
-import com.skypro_course2.skypro_course2.exception.EmptyQuestionSetException;
-import com.skypro_course2.skypro_course2.exception.RemovingQuestionException;
+import com.skypro_course2.skypro_course2.exception.AddingDuplicateQuestionException;
+import com.skypro_course2.skypro_course2.exception.EmptyListOfQuestionsException;
+import com.skypro_course2.skypro_course2.service.JavaQuestionRepository;
 import com.skypro_course2.skypro_course2.service.JavaQuestionService;
-import com.skypro_course2.skypro_course2.service.QuestionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class JavaQuestionServiceTest {
 
+    @Mock
+    private JavaQuestionRepository javaQuestionRepositoryMock;
+
+    @InjectMocks
     private JavaQuestionService javaQuestionService;
 
     Question question;
 
     @BeforeEach
     public void setup() {
-        javaQuestionService = new JavaQuestionService();
-
         question = new Question("Что такое JVM?", "JVM (Java Virtual Machine) — это виртуальная машина, которая выполняет байт-код Java.");
     }
 
     @Test
     @DisplayName("Положительный тест на добавление вопроса через поля")
     public void shouldAddQuestionToSetByFields() {
-        javaQuestionService.add(question.getQuestion(), question.getAnswer());
+        when(javaQuestionRepositoryMock.add(question.getQuestion(), question.getAnswer())).thenReturn(question);
 
-        assertEquals(1, javaQuestionService.getAll().size());
+        assertNotNull(javaQuestionService.add(question.getQuestion(), question.getAnswer()));
+
+        verify(javaQuestionRepositoryMock, times(1)).add(question.getQuestion(), question.getAnswer());
     }
 
     @Test
     @DisplayName("Отрицательный тест на добавление вопроса через объект класса")
     public void shouldThrowExceptionWhenObjAlreadyAssignedByFields() {
-        javaQuestionService.add(question.getQuestion(), question.getAnswer());
+        when(javaQuestionRepositoryMock.add(question.getQuestion(), question.getAnswer())).thenThrow(AddingDuplicateQuestionException.class);
 
-        assertThrows(AddingQuestionException.class, () -> javaQuestionService.add(question.getQuestion(), question.getAnswer()));
+        assertThrows(AddingDuplicateQuestionException.class, () -> javaQuestionService.add(question.getQuestion(), question.getAnswer()));
+
+        verify(javaQuestionRepositoryMock, times(1)).add(question.getQuestion(), question.getAnswer());
     }
 
     @Test
     @DisplayName("Положительный тест на добавление вопроса через объект класса")
     public void shouldAddQuestionToSetByObject() {
-        javaQuestionService.add(question);
+        when(javaQuestionRepositoryMock.add(question)).thenReturn(question);
 
-        assertEquals(1, javaQuestionService.getAll().size());
+        assertNotNull(javaQuestionService.add(question));
+
+        verify(javaQuestionRepositoryMock, times(1)).add(question);
     }
 
     @Test
     @DisplayName("Отрицательный тест на добавление вопроса через объект класса")
     public void shouldThrowExceptionWhenObjAlreadyAssignedByObject() {
-        javaQuestionService.add(question);
+        when(javaQuestionRepositoryMock.add(question)).thenThrow(AddingDuplicateQuestionException.class);
 
-        assertThrows(AddingQuestionException.class, () -> javaQuestionService.add(question));
+        assertThrows(AddingDuplicateQuestionException.class, () -> javaQuestionService.add(question));
+
+        verify(javaQuestionRepositoryMock, times(1)).add(question);
     }
 
     @Test
-    @DisplayName("Положительный тест на удаление вопроса")
-    public void shouldRemoveObject() {
-        javaQuestionService.add(question);
+    @DisplayName("Положительный тест на удаление вопроса по полям")
+    public void shouldRemoveObjectByField() {
+        when(javaQuestionRepositoryMock.remove(question.getQuestion(), question.getAnswer())).thenReturn(question);
 
-        assertEquals(1, javaQuestionService.getAll().size());
+        assertNotNull(javaQuestionService.remove(question.getQuestion(), question.getAnswer()));
 
-        javaQuestionService.remove(question);
-
-        assertThrows(EmptyQuestionSetException.class, () -> javaQuestionService.getAll().size());
+        verify(javaQuestionRepositoryMock, times(1)).remove(question.getQuestion(), question.getAnswer());
     }
 
     @Test
-    @DisplayName("Отрицательный тест на удаление несуществующего вопроса")
-    public void shouldThrowExceptionWhenRemoveObject() {
-        assertThrows(RemovingQuestionException.class, () -> javaQuestionService.remove(question));
+    @DisplayName("Отрицательный тест на удаление несуществующего вопроса по полям")
+    public void shouldThrowExceptionWhenRemoveObjectByFields() {
+        when(javaQuestionRepositoryMock.remove(question.getQuestion(), question.getAnswer())).thenThrow(AddingDuplicateQuestionException.class);
+
+        assertThrows(AddingDuplicateQuestionException.class, () -> javaQuestionService.remove(question.getQuestion(), question.getAnswer()));
+
+        verify(javaQuestionRepositoryMock, times(1)).remove(question.getQuestion(), question.getAnswer());
+    }
+
+    @Test
+    @DisplayName("Положительный тест на удаление вопроса по объекту")
+    public void shouldRemoveObjectByObject() {
+        when(javaQuestionRepositoryMock.remove(question)).thenReturn(question);
+
+        assertNotNull(javaQuestionService.remove(question));
+
+        verify(javaQuestionRepositoryMock, times(1)).remove(question);
+    }
+
+    @Test
+    @DisplayName("Отрицательный тест на удаление несуществующего вопроса по объекту")
+    public void shouldThrowExceptionWhenRemoveObjectByObject() {
+        when(javaQuestionRepositoryMock.remove(question)).thenThrow(AddingDuplicateQuestionException.class);
+
+        assertThrows(AddingDuplicateQuestionException.class, () -> javaQuestionService.remove(question));
+
+        verify(javaQuestionRepositoryMock, times(1)).remove(question);
     }
 
     @Test
     @DisplayName("Положительный тест на вывод списка вопросов")
     public void shouldReturnQuestionSet() {
-        javaQuestionService.add(question);
-        Collection<Question> expected = List.of(question);
+        Collection<Question> questionCollection = List.of(question);
 
-        assertEquals(expected, javaQuestionService.getAll());
+        when(javaQuestionRepositoryMock.getAll()).thenReturn(questionCollection);
+
+        assertNotNull(javaQuestionService.getAll());
+
+        verify(javaQuestionRepositoryMock, times(1)).getAll();
     }
 
     @Test
     @DisplayName("Отрицательный тест на вывод списка вопросов")
     public void shouldThrowExceptionWhenNoSetToGet() {
-        assertThrows(EmptyQuestionSetException.class, () -> javaQuestionService.getAll());
+        when(javaQuestionRepositoryMock.getAll()).thenThrow(EmptyListOfQuestionsException.class);
+
+        assertThrows(EmptyListOfQuestionsException.class, () -> javaQuestionService.getAll());
+
+        verify(javaQuestionRepositoryMock, times(1)).getAll();
+    }
+
+    @Test
+    @DisplayName("Положительный тест на вывод случайного вопроса")
+    public void shouldReturnRandomQuestion() {
+        Collection<Question> questionCollection = List.of(question);
+
+        when(javaQuestionRepositoryMock.getAll()).thenReturn(questionCollection);
+
+        assertNotNull(javaQuestionService.getRandomQuestion());
+
+        verify(javaQuestionRepositoryMock, times(2)).getAll();
     }
 
     @Test
     @DisplayName("Отрицательный тест на вывод случайного вопроса")
     public void shouldThrowExceptionWhenNoQuestionToGet() {
-        assertThrows(EmptyQuestionSetException.class, () -> javaQuestionService.getRandomQuestion());
+        when(javaQuestionRepositoryMock.getAll()).thenThrow(EmptyListOfQuestionsException.class);
+
+        assertThrows(EmptyListOfQuestionsException.class, () -> javaQuestionService.getRandomQuestion());
+
+        verify(javaQuestionRepositoryMock, times(1)).getAll();
     }
 }
